@@ -1,85 +1,90 @@
-s<!DOCTYPE html>
-<html lang="hi">
-<head>
-  <meta charset="UTF-8">
-  <title>om bhai.com</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 96px;
-background-color:yellow;
-    }
-    h1 {
-      color: red;
-      text-transform: capitalize;
-    }
-    .poem-box {
-      border: 2px solid #ccc;
-      padding: 25px;
-      margin: 20px auto;
-      width: 80% ;
-      text-align: left;
-      background-color: #pink;
-    }
-    .poem-box h2 {
-      text-transform: capitalize;
-    }
-    .poem-box ol {
-      color: red;
-      font-size: 40px;
-      line-height: 1.8;
-    }
-    .writer {
-  margin-top: 49px;
-  font-size: 39px;
-  font-weight: bold;
-  color: darkblue;
-  background: linear-gradient(to right, lightyellow, lightblue);
-  padding: 20px;
-  border-radius: 15px;
-  border: 2px solid blue;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+# app.py
+from flask import Flask, request, jsonify, render_template_string
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+app = Flask(__name__)
+
+# --- Simple knowledge base (आप इसे बढ़ा/बदल सकते हो) ---
+kb = [
+    "Namaste! Main ek simple chatbot hoon. Aap se milkar khushi hui.",
+    "Main Python, HTML, CSS aur basic programming mein madad kar sakta hoon.",
+    "Agar aap AI seekhna chahte ho to main projects aur tutorials bata sakta hoon.",
+    "Termux par Python chalane ke liye 'pkg install python' use kar sakte ho.",
+    "Web development mein HTML, CSS aur JavaScript kaafi jaruri hain.",
+    "TensorFlow aur PyTorch deep learning libraries hain.",
+    "Aap mujhe koi sawaal pooch sakte ho, main koshish karunga jawab dene ki."
+]
+
+# Precompute TF-IDF for KB
+vectorizer = TfidfVectorizer().fit(kb)
+kb_vecs = vectorizer.transform(kb)
+
+def get_response(user_text, top_k=1, threshold=0.2):
+    user_vec = vectorizer.transform([user_text])
+    sims = cosine_similarity(user_vec, kb_vecs).flatten()
+    idx = np.argmax(sims)
+    score = sims[idx]
+    if score >= threshold:
+        return kb[idx], float(score)
+    else:
+        # fallback: simple echo / suggestion
+        return "Maaf karo — mujhe iske baare mein nahi pata. Kya aap thoda aur bata sakte ho?", float(score)
+
+# Minimal web UI (single file HTML)
+HTML = """
+<!doctype html>
+<title>Simple AI Chatbot</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; max-width:700px; margin:auto; }
+  .chat { border:1px solid #ddd; padding:10px; height:400px; overflow:auto; background:#fafafa; }
+  .user { color: blue; }
+  .bot { color: green; }
+  form { margin-top:10px; display:flex; }
+  input[type=text]{ flex:1; padding:8px; }
+  button{ padding:8px 12px; }
+</style>
+<h1>Simple AI Chatbot</h1>
+<div class="chat" id="chat"></div>
+<form id="f" onsubmit="send(event)">
+  <input id="txt" autocomplete="off" placeholder="Message likho..." />
+  <button>Send</button>
+</form>
+<script>
+function addLine(who, text){
+  const d=document.getElementById('chat');
+  const div=document.createElement('div');
+  div.innerHTML = '<strong class="'+who+'">'+who+':</strong> '+text;
+  d.appendChild(div);
+  d.scrollTop = d.scrollHeight;
 }
+async function send(e){
+  e.preventDefault();
+  const t=document.getElementById('txt');
+  if(!t.value) return;
+  addLine('You', t.value);
+  const resp = await fetch('/api/chat', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({message: t.value})
+  });
+  const j = await resp.json();
+  addLine('Bot', j.reply + ' <small>(score: '+j.score.toFixed(2)+')</small>');
+  t.value='';
+}
+</script>
+"""
 
+@app.route("/")
+def index():
+    return render_template_string(HTML)
 
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    data = request.get_json() or {}
+    msg = data.get("message", "")
+    reply, score = get_response(msg)
+    return jsonify({"reply": reply, "score": score})
 
-    .photos img {
-      width: 250px;
-      height: auto;
-      margin: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-  </style>
-</head>
-<body>
-
-  <h1>hello friend aapka om bhai ak mahan scientist ki poem laka aaya hai</h1>
-
-  <div class="poem-box">
-    <h2>thomas alva edison poem</h2>
-    <ol>
-      <li>अँधेरे से लड़कर जिसने रोशनी का नाम लिखा,</li>
-      <li>हज़ार बार टूटा, फिर भी कोशिश को थाम रखा।</li>
-      <li>हर गलती में सीख का एक कारण देखा,</li>
-      <li>सपनों के पीछे बस मेहनत का दाम रखा।</li>
-      <li>उसने दिखाया कि कोशिश कभी बेकार नहीं होती,</li>
-      <li>थोड़ी देर लगे, पर मेहनत पर हार नहीं होती।</li>
-      <li>थॉमस एडिसन — वो इंसान जिसने ना शब्द को मिटा दिया।</li>
-    </ol>
-  </div>
-
-  <div class="writer">
-    writter: <b>om singh</b><br>
-    <small>bhaiyo ya meri pehli website ha, aap sabhi ko kaise lage 😊</small>
-  </div>
-
-  <h3>Thomas Alva Edison Photos</h3>
-  <div class="photos">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Thomas_Edison2.jpg" alt="Thomas Edison Portrait">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0d/Thomas_Edison_1910.jpg" alt="Thomas Edison Photo">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Thomas_Edison_and_Henry_Ford_on_Edison's_80th_birthday_cropped.jpg" alt="Thomas Edison with Henry Ford">
-  </div>
-</body>
-
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
