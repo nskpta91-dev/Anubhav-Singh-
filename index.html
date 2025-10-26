@@ -1,12 +1,14 @@
 # app.py
 from flask import Flask, request, jsonify, render_template_string
+from flask_cors import CORS
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 app = Flask(__name__)
+CORS(app)  # Browser/mobile fetch allow
 
-# --- Simple knowledge base (आप इसे बढ़ा/बदल सकते हो) ---
+# --- Knowledge Base ---
 kb = [
     "Namaste! Main ek simple chatbot hoon. Aap se milkar khushi hui.",
     "Main Python, HTML, CSS aur basic programming mein madad kar sakta hoon.",
@@ -17,24 +19,27 @@ kb = [
     "Aap mujhe koi sawaal pooch sakte ho, main koshish karunga jawab dene ki."
 ]
 
-# Precompute TF-IDF for KB
+# Precompute TF-IDF
 vectorizer = TfidfVectorizer().fit(kb)
 kb_vecs = vectorizer.transform(kb)
 
-def get_response(user_text, top_k=1, threshold=0.2):
+def get_response(user_text, threshold=0.2):
     user_vec = vectorizer.transform([user_text])
     sims = cosine_similarity(user_vec, kb_vecs).flatten()
     idx = np.argmax(sims)
     score = sims[idx]
+    print("DEBUG:", user_text, "->", sims)
     if score >= threshold:
         return kb[idx], float(score)
     else:
-        # fallback: simple echo / suggestion
         return "Maaf karo — mujhe iske baare mein nahi pata. Kya aap thoda aur bata sakte ho?", float(score)
 
-# Minimal web UI (single file HTML)
+# --- HTML + JS ---
 HTML = """
 <!doctype html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
 <title>Simple AI Chatbot</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; max-width:700px; margin:auto; }
@@ -45,6 +50,8 @@ HTML = """
   input[type=text]{ flex:1; padding:8px; }
   button{ padding:8px 12px; }
 </style>
+</head>
+<body>
 <h1>Simple AI Chatbot</h1>
 <div class="chat" id="chat"></div>
 <form id="f" onsubmit="send(event)">
@@ -59,20 +66,28 @@ function addLine(who, text){
   d.appendChild(div);
   d.scrollTop = d.scrollHeight;
 }
+
 async function send(e){
   e.preventDefault();
   const t=document.getElementById('txt');
   if(!t.value) return;
   addLine('You', t.value);
-  const resp = await fetch('/api/chat', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({message: t.value})
-  });
-  const j = await resp.json();
-  addLine('Bot', j.reply + ' <small>(score: '+j.score.toFixed(2)+')</small>');
+  try {
+    const resp = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message: t.value})
+    });
+    const j = await resp.json();
+    addLine('Bot', j.reply + ' <small>(score: '+j.score.toFixed(2)+')</small>');
+  } catch(err) {
+    addLine('Bot', 'Server se response nahi aaya. Check karo Flask chal raha hai ya nahi.');
+  }
   t.value='';
 }
 </script>
+</body>
+</html>
 """
 
 @app.route("/")
