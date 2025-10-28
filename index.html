@@ -1,566 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Advanced Calculator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Dark Calculator</title>
   <style>
-    :root{
-      --bg: #f0f3f7;
-      --panel: #ffffff;
-      --accent: #0057ff;
-      --muted: #777;
-      --btn: #e9eefb;
-      --op: #ffd580;
-      --danger: #ff6b6b;
-      --glass: rgba(255,255,255,0.6);
-      --shadow: 0 8px 30px rgba(15,23,42,0.08);
-      --radius: 12px;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    .dark {
-      --bg: #0f1724;
-      --panel: #0b1220;
-      --accent: #4cc9f0;
-      --muted: #9aa5b1;
-      --btn: #0f2437;
-      --op: #ff9f43;
-      --danger: #ff6b6b;
-      --glass: rgba(255,255,255,0.02);
-      --shadow: 0 8px 30px rgba(0,0,0,0.6);
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
     }
 
-    html,body{
-      height:100%;
-      margin:0;
-      background: linear-gradient(180deg,var(--bg), #dbe7ff 60%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-      box-sizing:border-box;
+    body {
+      background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
 
-    .container{
-      width:100%;
-      max-width:980px;
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:20px;
+    .calculator {
+      width: 340px;
+      background: #111;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+      padding: 20px;
     }
-
-    /* Left: calculator */
-    .calc {
-      background: var(--panel);
-      border-radius: var(--radius);
-      padding:18px;
-      box-shadow: var(--shadow);
-      display:flex;
-      flex-direction:column;
-      min-height:520px;
-      box-sizing:border-box;
-    }
-
-    .top-row {
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:12px;
-    }
-
-    .brand {
-      font-weight:600;
-      letter-spacing:0.2px;
-    }
-    .controls { display:flex; gap:8px; align-items:center; }
-
-    .btn {
-      padding:8px 10px;
-      border-radius:10px;
-      border:none;
-      background:var(--btn);
-      cursor:pointer;
-      font-weight:600;
-      box-shadow:0 2px 6px rgba(0,0,0,0.04);
-    }
-    .btn:active{ transform: translateY(1px); }
 
     .display {
-      width:100%;
-      height:78px;
-      border-radius:10px;
-      background:var(--glass);
-      border: 1px solid rgba(0,0,0,0.04);
-      padding:10px 14px;
-      box-sizing:border-box;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:6px;
-      margin-bottom:14px;
-      color:var(--muted);
-    }
-    .display .expr{
-      font-size:14px;
-      color:var(--muted);
-      min-height:18px;
-      word-break:break-all;
-    }
-    .display .result{
-      font-size:22px;
-      font-weight:700;
-      color:var(--accent);
-      text-align:right;
-      word-break:break-all;
+      background: #000;
+      color: #00ffcc;
+      font-size: 2em;
+      text-align: right;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      min-height: 50px;
+      overflow-x: auto;
     }
 
-    .keys {
-      display:grid;
-      grid-template-columns: repeat(6,1fr);
-      gap:10px;
-      align-items:stretch;
-      flex:1;
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
     }
 
-    button.key {
-      padding:14px 8px;
-      border-radius:10px;
-      border:none;
-      background:var(--btn);
-      font-size:15px;
-      font-weight:600;
-      cursor:pointer;
-      user-select:none;
-    }
-    button.key.operator { background:var(--op); color:#000; }
-    button.key.equals { grid-column: span 2; background:var(--accent); color:#fff; }
-    button.key.wide { grid-column: span 2; }
-    button.key.danger { background:var(--danger); color:#fff; }
-
-    /* Right: history & extras */
-    .side {
-      background:var(--panel);
-      border-radius:var(--radius);
-      padding:14px;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-height:520px;
-      box-sizing:border-box;
+    button {
+      border: none;
+      font-size: 1.2em;
+      padding: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #fff;
     }
 
-    .section-title {
-      font-weight:700;
-      margin:0 0 6px 0;
-      font-size:14px;
-    }
-    .history {
-      background:transparent;
-      border-radius:8px;
-      padding:8px;
-      min-height:120px;
-      max-height:360px;
-      overflow:auto;
-      border:1px dashed rgba(0,0,0,0.04);
-    }
-    .hist-item {
-      display:flex;
-      justify-content:space-between;
-      gap:8px;
-      padding:6px;
-      border-radius:8px;
-      font-size:13px;
-      color:var(--muted);
-    }
-    .hist-item .expr { color:var(--muted); }
-    .hist-item .res { font-weight:700; color:var(--accent); }
-
-    .side .small {
-      font-size:13px;
-      color:var(--muted);
+    button.number {
+      background: #1e1e1e;
     }
 
-    .flex-row { display:flex; gap:8px; align-items:center; }
-
-    /* responsive */
-    @media (max-width:980px){
-      .container{ grid-template-columns: 1fr; }
-      .keys { grid-template-columns: repeat(6,1fr); }
-      .side { order:2; }
+    button.operator {
+      background: #00bcd4;
+      color: #000;
+      font-weight: bold;
     }
-    @media (max-width:560px){
-      .keys { grid-template-columns: repeat(4,1fr); }
-      button.key.equals { grid-column: span 2; }
+
+    button.equal {
+      background: #00ff80;
+      color: #000;
+      grid-column: span 2;
+    }
+
+    button.clear {
+      background: #ff1744;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00ffff;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.8em;
+      color: #555;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="app">
-    <div class="calc" role="application" aria-label="Advanced calculator">
-      <div class="top-row">
-        <div class="brand">Advanced Calculator</div>
-        <div class="controls">
-          <button class="btn" id="themeToggle" title="Toggle dark">🌙</button>
-          <button class="btn" id="clearHistory" title="Clear history">🧹</button>
-        </div>
-      </div>
 
-      <div class="display" id="display" aria-live="polite">
-        <div class="expr" id="expression" aria-label="Expression"></div>
-        <div class="result" id="result" aria-label="Result">0</div>
-      </div>
+  <div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button class="operator" onclick="press('π')">π</button>
+      <button class="operator" onclick="press('e')">e</button>
+      <button class="operator" onclick="press('√(')">√</button>
+      <button class="clear" onclick="clearDisplay()">AC</button>
 
-      <div class="keys" id="keys">
-        <!-- Row 1 -->
-        <button class="key" data-action="mc">MC</button>
-        <button class="key" data-action="mr">MR</button>
-        <button class="key" data-action="mplus">M+</button>
-        <button class="key" data-action="mminus">M-</button>
-        <button class="key" data-action="percent">%</button>
-        <button class="key" data-action="back">⌫</button>
+      <button class="number" onclick="press('7')">7</button>
+      <button class="number" onclick="press('8')">8</button>
+      <button class="number" onclick="press('9')">9</button>
+      <button class="operator" onclick="press('/')">÷</button>
 
-        <!-- Row 2 -->
-        <button class="key" data-action="(">(</button>
-        <button class="key" data-action=")">)</button>
-        <button class="key" data-action="pi">π</button>
-        <button class="key" data-action="e">e</button>
-        <button class="key operator" data-action="/">÷</button>
-        <button class="key operator" data-action="sqrt">√</button>
+      <button class="number" onclick="press('4')">4</button>
+      <button class="number" onclick="press('5')">5</button>
+      <button class="number" onclick="press('6')">6</button>
+      <button class="operator" onclick="press('*')">×</button>
 
-        <!-- Row 3 -->
-        <button class="key" data-action="7">7</button>
-        <button class="key" data-action="8">8</button>
-        <button class="key" data-action="9">9</button>
-        <button class="key operator" data-action="*">×</button>
-        <button class="key" data-action="pow">xʸ</button>
-        <button class="key operator" data-action="^2">x²</button>
+      <button class="number" onclick="press('1')">1</button>
+      <button class="number" onclick="press('2')">2</button>
+      <button class="number" onclick="press('3')">3</button>
+      <button class="operator" onclick="press('-')">−</button>
 
-        <!-- Row 4 -->
-        <button class="key" data-action="4">4</button>
-        <button class="key" data-action="5">5</button>
-        <button class="key" data-action="6">6</button>
-        <button class="key operator" data-action="-">−</button>
-        <button class="key" data-action="sin">sin</button>
-        <button class="key" data-action="cos">cos</button>
+      <button class="number" onclick="press('0')">0</button>
+      <button class="number" onclick="press('.')">.</button>
+      <button class="operator" onclick="press('+')">+</button>
+      <button class="equal" onclick="calculate()">=</button>
 
-        <!-- Row 5 -->
-        <button class="key" data-action="1">1</button>
-        <button class="key" data-action="2">2</button>
-        <button class="key" data-action="3">3</button>
-        <button class="key operator" data-action="+">+</button>
-        <button class="key" data-action="tan">tan</button>
-        <button class="key" data-action="log">log</button>
-
-        <!-- Row 6 -->
-        <button class="key wide" data-action="0">0</button>
-        <button class="key" data-action=".">.</button>
-        <button class="key equals" data-action="=">=</button>
-        <button class="key danger" data-action="ac">AC</button>
-      </div>
+      <button class="operator" onclick="press('sin(')">sin</button>
+      <button class="operator" onclick="press('cos(')">cos</button>
+      <button class="operator" onclick="press('tan(')">tan</button>
+      <button class="operator" onclick="press('log(')">log</button>
     </div>
-
-    <div class="side">
-      <div>
-        <h3 class="section-title">History</h3>
-        <div class="history" id="history"></div>
-        <div class="flex-row">
-          <div class="small">Stored in browser (local)</div>
-        </div>
-      </div>
-
-      <div>
-        <h3 class="section-title">Memory</h3>
-        <div id="memoryDisplay" class="small">Memory: <span id="memVal">0</span></div>
-      </div>
-
-      <div>
-        <h3 class="section-title">Tips</h3>
-        <div class="small">
-          Keyboard: numbers, + - * /, Enter (=), Backspace (⌫), Esc (AC).<br>
-          Use xʸ to raise a number — type base then press xʸ then exponent in parentheses e.g. <code>2 xʸ (3)</code>.
-        </div>
-      </div>
-    </div>
+    <div class="footer">⭐ Made by Bhai’s Advanced Calculator</div>
   </div>
 
   <script>
-    // --- state ---
-    const expressionEl = document.getElementById('expression');
-    const resultEl = document.getElementById('result');
-    const historyEl = document.getElementById('history');
-    const memValEl = document.getElementById('memVal');
-    const themeToggle = document.getElementById('themeToggle');
+    const display = document.getElementById('display');
+    let current = '';
 
-    let expr = '';                 // visible expression string
-    let memory = parseFloat(localStorage.getItem('calc_memory') || '0') || 0;
-    let history = JSON.parse(localStorage.getItem('calc_history') || '[]');
-
-    // --- utility ---
-    const toDisplayNumber = (v) => {
-      // show as integer if whole, else limit decimals
-      if (!isFinite(v)) return 'Error';
-      if (Math.abs(v) < 1e-12) return '0';
-      if (Math.abs(v) >= 1e12) return v.toExponential(8);
-      return (Math.round(v * 1e10) / 1e10).toString();
-    };
-
-    function refreshUI(){
-      expressionEl.textContent = expr || '';
-      resultEl.textContent = expr ? '' : '0';
-      memValEl.textContent = memory;
-      renderHistory();
-      // theme state
-      if (localStorage.getItem('calc_theme') === 'dark') document.documentElement.classList.add('dark');
-      else document.documentElement.classList.remove('dark');
+    function press(val) {
+      if (val === 'π') val = Math.PI;
+      if (val === 'e') val = Math.E;
+      current += val;
+      display.textContent = current;
     }
 
-    function renderHistory(){
-      historyEl.innerHTML = '';
-      if (!history.length){
-        historyEl.innerHTML = '<div class="small" style="padding:8px;color:var(--muted)">No history yet</div>';
-        return;
-      }
-      history.slice().reverse().forEach((it, idx) => {
-        const div = document.createElement('div');
-        div.className = 'hist-item';
-        div.innerHTML = `<div class="expr">${escapeHtml(it.e)}</div><div class="res">${escapeHtml(it.r)}</div>`;
-        div.addEventListener('click', ()=> {
-          expr = it.e;
-          resultEl.textContent = it.r;
-          refreshUI();
-        });
-        historyEl.appendChild(div);
-      });
+    function clearDisplay() {
+      current = '';
+      display.textContent = '0';
     }
 
-    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-
-    // --- parser & evaluator ---
-    // We support tokens: sin(), cos(), tan(), log(), sqrt(), %, pi, e, ^ for pow
-    function safeEval(expression) {
-      if (!expression || /[a-zA-Z]{2,}/.test(expression) && !/sin|cos|tan|log|sqrt|pi|e/.test(expression)) {
-        // reject unknown alpha sequences for safety
-        throw new Error('Invalid token');
-      }
-
-      // normalize common symbols
-      let e = expression
-        .replaceAll('×','*')
-        .replaceAll('÷','/')
-        .replaceAll('−','-')
-        .replaceAll('^2','**2');
-
-      // percent handling: convert "number%" to "(number/100)"
-      e = e.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
-
-      // function names -> Math equivalents or custom
-      e = e
-        .replaceAll('π','Math.PI')
-        .replaceAll('pi','Math.PI')
-        .replaceAll('e','Math.E')
-        .replaceAll('sin','Math.sin')
-        .replaceAll('cos','Math.cos')
-        .replaceAll('tan','Math.tan')
-        .replaceAll('log','Math.log10') // log = base-10 for UI; ln not included
-        .replaceAll('ln','Math.log')
-        .replaceAll('sqrt','Math.sqrt');
-
-      // handle xʸ (pow) token: we convert 'pow(a,b)' usage earlier. But allow 'x**y' via xʸ button which inserts '**('pattern)
-      // Replace instances of 'xʸ' usage inserted as 'pow(' by our button - we will insert 'pow(' in expr when user presses.
-      e = e.replaceAll('pow(', 'Math.pow(');
-
-      // Now evaluate in function scope to avoid global access
-      // Using Function is similar to eval, but for a local calculator (no network) it's acceptable.
-      // Make sure only numbers and allowed symbols remain (basic check)
-      if (/[^0-9+\-*/().,MathPIEpowsincoagtlnr x]/i.test(e)) {
-        // relax check a bit but avoid letters other than Math,PI, etc
-        // We'll still try-catch below
-      }
-
-      // final eval
-      // disable certain names by constructing a new Function with no accessible globals
-      const fn = new Function('return (' + e + ');');
-      return fn();
-    }
-
-    // --- actions ---
-    function appendToken(t){
-      // if last token is number and t is number or dot - just append
-      expr += t;
-      refreshUI();
-    }
-
-    function actionAC(){
-      expr = '';
-      resultEl.textContent = '0';
-      refreshUI();
-    }
-
-    function actionBack(){
-      expr = expr.slice(0,-1);
-      refreshUI();
-    }
-
-    function actionEvaluate(){
-      if (!expr) return;
+    function calculate() {
       try {
-        let value = safeEval(expr);
-        if (typeof value === 'number' && !Number.isFinite(value)) throw new Error('Bad');
-        const display = toDisplayNumber(value);
-        // push to history
-        history.push({ e: expr, r: display });
-        if (history.length > 200) history.shift();
-        localStorage.setItem('calc_history', JSON.stringify(history));
-        expr = String(display); // allow further ops on result
-        resultEl.textContent = display;
+        let exp = current
+          .replace(/√/g, 'Math.sqrt')
+          .replace(/sin/g, 'Math.sin')
+          .replace(/cos/g, 'Math.cos')
+          .replace(/tan/g, 'Math.tan')
+          .replace(/log/g, 'Math.log');
+        let result = eval(exp);
+        display.textContent = result.toPrecision(8).replace(/\.?0+$/, "");
+        current = result;
       } catch (err) {
-        resultEl.textContent = 'Error';
-      }
-      refreshUI();
-    }
-
-    function actionPercent(){
-      // append % token (handled in evaluator)
-      expr += '%';
-      refreshUI();
-    }
-
-    function actionPow(){
-      // Insert pow( ... ) pattern to allow user to type pow(base,exponent)
-      // But to make it friendly, we'll insert 'pow(' and user can type '2,3)' or we can auto add closing paren later.
-      expr += 'pow(';
-      refreshUI();
-    }
-
-    function actionSqrt(){
-      expr += 'sqrt(';
-      refreshUI();
-    }
-
-    // --- memory ops ---
-    function memClear(){
-      memory = 0;
-      localStorage.setItem('calc_memory', memory);
-      refreshUI();
-    }
-    function memRecall(){
-      expr += String(memory);
-      refreshUI();
-    }
-    function memAdd(){
-      try {
-        const v = safeEval(expr || '0');
-        memory = (parseFloat(memory) || 0) + (parseFloat(v) || 0);
-        localStorage.setItem('calc_memory', memory);
-        refreshUI();
-      } catch {
-        resultEl.textContent = 'Error';
+        display.textContent = 'Error';
       }
     }
-    function memSub(){
-      try {
-        const v = safeEval(expr || '0');
-        memory = (parseFloat(memory) || 0) - (parseFloat(v) || 0);
-        localStorage.setItem('calc_memory', memory);
-        refreshUI();
-      } catch {
-        resultEl.textContent = 'Error';
-      }
-    }
-
-    // --- events from buttons ---
-    document.getElementById('keys').addEventListener('click', (ev)=>{
-      const btn = ev.target.closest('button');
-      if (!btn) return;
-      const action = btn.dataset.action;
-      switch(action){
-        case 'ac': actionAC(); break;
-        case 'back': actionBack(); break;
-        case '=': actionEvaluate(); break;
-        case 'percent': actionPercent(); break;
-        case 'pi': appendToken('pi'); break;
-        case 'e': appendToken('e'); break;
-        case 'sqrt': actionSqrt(); break;
-        case 'pow': actionPow(); break;
-        case '^2': appendToken('**2'); break;
-        case 'sin': appendToken('sin('); break;
-        case 'cos': appendToken('cos('); break;
-        case 'tan': appendToken('tan('); break;
-        case 'log': appendToken('log('); break;
-        case 'mplus': memAdd(); break;
-        case 'mminus': memSub(); break;
-        case 'mr': memRecall(); break;
-        case 'mc': memClear(); break;
-        case '(':
-        case ')':
-        case '/':
-        case '*':
-        case '-':
-        case '+':
-        case '.':
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-          appendToken(action); break;
-        default:
-          // fallback for any other label
-          appendToken(btn.textContent.trim());
-      }
-    });
-
-    // clear history button
-    document.getElementById('clearHistory').addEventListener('click', ()=>{
-      if (!confirm('Clear calculation history?')) return;
-      history = [];
-      localStorage.removeItem('calc_history');
-      refreshUI();
-    });
-
-    // theme toggle
-    themeToggle.addEventListener('click', ()=>{
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('calc_theme', isDark ? 'dark' : 'light');
-      themeToggle.textContent = isDark ? '☀️' : '🌙';
-    });
-
-    // keyboard support
-    window.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter') { e.preventDefault(); actionEvaluate(); return; }
-      if (e.key === 'Escape') { e.preventDefault(); actionAC(); return; }
-      if (e.key === 'Backspace') { e.preventDefault(); actionBack(); return; }
-      // digits and operators
-      if (/^[0-9]$/.test(e.key)) { appendToken(e.key); return; }
-      if (['+','-','/','*','.','(',')','%'].includes(e.key)) { appendToken(e.key); return; }
-      // ^ for power
-      if (e.key === '^') { appendToken('**'); return; }
-      // simple shortcuts: s for sin, c cos, t tan, l log, r sqrt
-      if (e.key.toLowerCase() === 's') { appendToken('sin('); return; }
-      if (e.key.toLowerCase() === 'c') { appendToken('cos('); return; }
-      if (e.key.toLowerCase() === 't') { appendToken('tan('); return; }
-      if (e.key.toLowerCase() === 'l') { appendToken('log('); return; }
-      if (e.key.toLowerCase() === 'r') { appendToken('sqrt('); return; }
-    });
-
-    // init
-    refreshUI();
-
-    // when page loads, render history list
-    renderHistory();
-
-    // helpful: click history item to reuse (already wired)
-    // last: show last result when opening
-    if (history.length) {
-      const last = history[history.length -1];
-      resultEl.textContent = last.r;
-    }
-
-    // small improvement: auto close pow/func parentheses insertion if user types ')'
-    // (left as-is; user can manage parentheses)
-
-    // Accessibility: focus on container to enable keyboard
-    document.getElementById('app').tabIndex = 0;
-    document.getElementById('app').focus();
   </script>
+
 </body>
 </html>
