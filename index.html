@@ -1,105 +1,131 @@
-# app.py
-from flask import Flask, request, jsonify, render_template_string
-from flask_cors import CORS
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
-app = Flask(__name__)
-CORS(app)  # Browser/mobile fetch allow
-
-# --- Knowledge Base ---
-kb = [
-    "Namaste! Main ek simple chatbot hoon. Aap se milkar khushi hui.",
-    "Main Python, HTML, CSS aur basic programming mein madad kar sakta hoon.",
-    "Agar aap AI seekhna chahte ho to main projects aur tutorials bata sakta hoon.",
-    "Termux par Python chalane ke liye 'pkg install python' use kar sakte ho.",
-    "Web development mein HTML, CSS aur JavaScript kaafi jaruri hain.",
-    "TensorFlow aur PyTorch deep learning libraries hain.",
-    "Aap mujhe koi sawaal pooch sakte ho, main koshish karunga jawab dene ki."
-]
-
-# Precompute TF-IDF
-vectorizer = TfidfVectorizer().fit(kb)
-kb_vecs = vectorizer.transform(kb)
-
-def get_response(user_text, threshold=0.2):
-    user_vec = vectorizer.transform([user_text])
-    sims = cosine_similarity(user_vec, kb_vecs).flatten()
-    idx = np.argmax(sims)
-    score = sims[idx]
-    print("DEBUG:", user_text, "->", sims)
-    if score >= threshold:
-        return kb[idx], float(score)
-    else:
-        return "Maaf karo — mujhe iske baare mein nahi pata. Kya aap thoda aur bata sakte ho?", float(score)
-
-# --- HTML + JS ---
-HTML = """
-<!doctype html>
-<html lang="hi">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Simple AI Chatbot</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; max-width:700px; margin:auto; }
-  .chat { border:1px solid #ddd; padding:10px; height:400px; overflow:auto; background:#fafafa; }
-  .user { color: blue; }
-  .bot { color: green; }
-  form { margin-top:10px; display:flex; }
-  input[type=text]{ flex:1; padding:8px; }
-  button{ padding:8px 12px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Calculator</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      font-family: Arial, sans-serif;
+    }
+
+    .calculator {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      width: 320px;
+      padding: 20px;
+    }
+
+    .display {
+      width: 100%;
+      height: 60px;
+      text-align: right;
+      font-size: 2em;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 20px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      background: #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .operator {
+      background: #ff9500;
+      color: white;
+    }
+
+    .equals {
+      background: #34c759;
+      color: white;
+      grid-column: span 2;
+    }
+
+    .clear {
+      background: #ff3b30;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-<h1>Simple AI Chatbot</h1>
-<div class="chat" id="chat"></div>
-<form id="f" onsubmit="send(event)">
-  <input id="txt" autocomplete="off" placeholder="Message likho..." />
-  <button>Send</button>
-</form>
-<script>
-function addLine(who, text){
-  const d=document.getElementById('chat');
-  const div=document.createElement('div');
-  div.innerHTML = '<strong class="'+who+'">'+who+':</strong> '+text;
-  d.appendChild(div);
-  d.scrollTop = d.scrollHeight;
-}
 
-async function send(e){
-  e.preventDefault();
-  const t=document.getElementById('txt');
-  if(!t.value) return;
-  addLine('You', t.value);
-  try {
-    const resp = await fetch('/api/chat', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message: t.value})
-    });
-    const j = await resp.json();
-    addLine('Bot', j.reply + ' <small>(score: '+j.score.toFixed(2)+')</small>');
-  } catch(err) {
-    addLine('Bot', 'Server se response nahi aaya. Check karo Flask chal raha hai ya nahi.');
-  }
-  t.value='';
-}
-</script>
+  <div class="calculator">
+    <input type="text" class="display" id="display" readonly>
+    <div class="buttons">
+      <button class="clear" onclick="clearDisplay()">C</button>
+      <button onclick="deleteLast()">⌫</button>
+      <button class="operator" onclick="append('%')">%</button>
+      <button class="operator" onclick="append('/')">÷</button>
+
+      <button onclick="append('7')">7</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('9')">9</button>
+      <button class="operator" onclick="append('*')">×</button>
+
+      <button onclick="append('4')">4</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('6')">6</button>
+      <button class="operator" onclick="append('-')">−</button>
+
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button class="operator" onclick="append('+')">+</button>
+
+      <button onclick="append('0')">0</button>
+      <button onclick="append('.')">.</button>
+      <button class="equals" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+
+    function append(value) {
+      display.value += value;
+    }
+
+    function clearDisplay() {
+      display.value = '';
+    }
+
+    function deleteLast() {
+      display.value = display.value.slice(0, -1);
+    }
+
+    function calculate() {
+      try {
+        display.value = eval(display.value.replace('÷', '/').replace('×', '*'));
+      } catch {
+        display.value = 'Error';
+      }
+    }
+  </script>
+
 </body>
 </html>
-"""
-
-@app.route("/")
-def index():
-    return render_template_string(HTML)
-
-@app.route("/api/chat", methods=["POST"])
-def api_chat():
-    data = request.get_json() or {}
-    msg = data.get("message", "")
-    reply, score = get_response(msg)
-    return jsonify({"reply": reply, "score": score})
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
